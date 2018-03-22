@@ -67,14 +67,18 @@ gameManager.prototype.rmClient = function(){
     this.nclient--;
 }
 gameManager.prototype.winGame = function(){
-    Game.setBoard(4,new TitleScreen("YOU WIN", 
+   
+    Game.setBoard(3,new TitleScreen("YOU WIN", 
                                   "PRESS ENTER TO START PLAYING",
                                   startGame));
+   
 }
 gameManager.prototype.loseGame = function(){
-    Game.setBoard(4,new TitleScreen("YOU LOOSE", 
+    
+    Game.setBoard(3,new TitleScreen("YOU LOOSE", 
                               "PRESS ENTER TO START PLAYING",
                               startGame));
+
 
 }
 
@@ -102,6 +106,7 @@ var startGame = function(){
     playerLayer.add(new spawner(new client("NPC", clientMv[0]), 3, 5, 2));
 
     Game.setBoard(3, new bw());
+
 }
 
 //---------------------------------------------------------------------
@@ -142,6 +147,7 @@ var playerMv = {
     3:{x:421, y:377}
 
 }
+
 
 var player = function(sprite, pos){
     this.setup(sprite, {x:pos.x, y:pos.y, pos:0});

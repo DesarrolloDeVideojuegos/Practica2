@@ -54,7 +54,7 @@ var Game = new function() {
   
 
   // Handle Input
-  var KEY_CODES = { 37:'left', 39:'right', 32 :'fire', 38:'up', 40:'down', 32:'space'};
+  var KEY_CODES = {13:'enter', 37:'left', 39:'right', 38:'up', 40:'down', 32:'space'};
   this.keys = {};
 
   this.setupInput = function() {
@@ -165,8 +165,8 @@ var SpriteSheet = new function() {
 var TitleScreen = function TitleScreen(title,subtitle,callback) {
   var up = false;
   this.step = function(dt) {
-    if(!Game.keys['fire']) up = true;
-    if(up && Game.keys['fire'] && callback) callback();
+    if(!Game.keys['enter']) up = true;
+    if(up && Game.keys['enter'] && callback) callback();
   };
 
   this.draw = function(ctx) {
@@ -388,7 +388,7 @@ var TouchControls = function() {
     var yLoc = Game.height - unitWidth;
     this.drawSquare(ctx,gutterWidth,yLoc,"\u25C0", Game.keys['left']);
     this.drawSquare(ctx,unitWidth + gutterWidth,yLoc,"\u25B6", Game.keys['right']);
-    this.drawSquare(ctx,4*unitWidth,yLoc,"A",Game.keys['fire']);
+    this.drawSquare(ctx,4*unitWidth,yLoc,"A",Game.keys['space']);
 
     ctx.restore();
   };
@@ -417,7 +417,7 @@ var TouchControls = function() {
         touch = e.changedTouches[i];
         x = touch.pageX / Game.canvasMultiplier - Game.canvas.offsetLeft;
         if(x > 4 * unitWidth) {
-          Game.keys['fire'] = (e.type == 'touchstart');
+          Game.keys['space'] = (e.type == 'touchstart');
         }
       }
     }
