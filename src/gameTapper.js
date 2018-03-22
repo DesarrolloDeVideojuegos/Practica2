@@ -44,6 +44,45 @@ var sprites = {
    };
 
 //---------------------------------------------------------------------
+//      GAMEMANAGER
+//---------------------------------------------------------------------
+
+var gameManager = function(){
+    this.nbeer = 0;
+    this.nclient = 0;
+}
+
+gameManager.prototype.addBeer = function(){
+    this.nbeer++;
+}
+gameManager.prototype.rmBeer = function(){
+    this.nbeer--;
+    if(this.nbeer === 0 && this.nclient === 0)
+        gm.winGame();
+}
+gameManager.prototype.addClients = function(num=1){
+    this.nclient += num;
+}
+gameManager.prototype.rmClient = function(){
+    this.nclient--;
+}
+gameManager.prototype.winGame = function(){
+   
+    Game.setBoard(3,new TitleScreen("YOU WIN", 
+                                  "PRESS ENTER TO START PLAYING",
+                                  startGame));
+   
+}
+gameManager.prototype.loseGame = function(){
+    
+    Game.setBoard(3,new TitleScreen("YOU LOOSE", 
+                              "PRESS ENTER TO START PLAYING",
+                              startGame));
+
+
+}
+
+//---------------------------------------------------------------------
 //      GAME
 //---------------------------------------------------------------------
 
@@ -54,7 +93,7 @@ var OBJECT_PLAYER = 1,
    OBJECT_GLASS = 16;
 
 var aux = 0;
-
+var gm = new gameManager();
 var startGame = function(){
     Game.setBoard(1, new bg());
     let playerLayer = new GameBoard();
@@ -63,8 +102,11 @@ var startGame = function(){
                     OBJECT_GLASS | OBJECT_NPC));
     playerLayer.add(new deadzone({x:clientMv[0].x - 12, y:clientMv[0].y}, {w:10,h:65}, OBJECT_BEER));
     playerLayer.add(new player("Player", playerMv[0]));
-    playerLayer.add(new beer("Beer", playerMv[0]));
-    playerLayer.add(new client("NPC", clientMv[0]));
+    //playerLayer.add(new beer("Beer", playerMv[0]));
+    playerLayer.add(new spawner(new client("NPC", clientMv[0]), 3, 5, 2));
+
+    Game.setBoard(3, new bw());
+
 }
 
 //---------------------------------------------------------------------
@@ -82,6 +124,19 @@ bg.prototype.step = function(){
 };
 
 //---------------------------------------------------------------------
+//      BARWALL
+//---------------------------------------------------------------------
+var bw = function(){
+    this.setup("ParedIzda",{x:0, y:0});
+   
+}
+
+bw.prototype = new Sprite();
+
+bw.prototype.step = function(){
+    return;  
+};
+//---------------------------------------------------------------------
 //      PLAYER
 //---------------------------------------------------------------------
 
@@ -92,6 +147,7 @@ var playerMv = {
     3:{x:421, y:377}
 
 }
+
 
 var player = function(sprite, pos){
     this.setup(sprite, {x:pos.x, y:pos.y, pos:0});
@@ -117,6 +173,7 @@ player.prototype.step = function(){
     let collision = this.board.collide(this, OBJECT_GLASS);
     if(collision){
         this.board.remove(collision);
+        gm.rmBeer();
     }
     this.x = playerMv[this.pos].x;
     this.y = playerMv[this.pos].y;
@@ -128,6 +185,7 @@ player.prototype.step = function(){
 
 var beer = function(sprite, pos){
     this.setup(sprite, {x:pos.x - 23, y:pos.y, vx:-30}); 
+    gm.addBeer();
 }
 
 beer.prototype = new Sprite();
@@ -168,6 +226,7 @@ client.prototype.step = function(dt){
     if(collision){
         collision.hit();
         this.board.remove(this);
+        gm.rmClient();
     }
     return;
 }
@@ -198,8 +257,40 @@ deadzone.prototype.step = function(){
     let collision = this.board.collide(this, this.collisionMask);
     if(collision){
         this.board.remove(collision);
-        console.log("Fin de partida");
+        gm.loseGame();
     }
+}
+
+//---------------------------------------------------------------------
+//      SPAWNER
+//---------------------------------------------------------------------
+
+var spawner = function(client, num, offset, frec){
+    this.client = client;
+    this.num = num;
+    this.maxFrec = frec;
+    this.actFrec = 0;
+    this.offset = offset;
+    gm.addClients(num);
+}
+
+spawner.prototype.draw = function(){
+    return;
+}
+
+spawner.prototype.step = function(dt){
+    if(this.offset <= 0){
+        if(this.actFrec <= 0){
+            this.board.add(Object.create(this.client));
+            this.actFrec = this.maxFrec;
+            if(--this.num === 0)
+                this.board.remove(this);
+        }
+        else
+            this.actFrec -= dt;
+    }
+    else
+        this.offset -= dt;
 }
 
 window.addEventListener("load", function() {
