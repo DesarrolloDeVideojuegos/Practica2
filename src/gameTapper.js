@@ -70,14 +70,14 @@ gameManager.prototype.winGame = function(){
    
     Game.setBoard(3,new TitleScreen("YOU WIN", 
                                   "PRESS ENTER TO START PLAYING",
-                                  startGame));
+                                  playGame));
    
 }
 gameManager.prototype.loseGame = function(){
     
     Game.setBoard(3,new TitleScreen("YOU LOOSE", 
                               "PRESS ENTER TO START PLAYING",
-                              startGame));
+                              playGame));
 
 
 }
@@ -94,19 +94,29 @@ var OBJECT_PLAYER = 1,
 
 var aux = 0;
 var gm = new gameManager();
+
 var startGame = function(){
     Game.setBoard(1, new bg());
+    Game.setBoard(3, new TitleScreen("TAPPER", "PRESS ENTER TO START PLAYING", playGame));
+}
+
+var playGame = function(){   
     let playerLayer = new GameBoard();
     Game.setBoard(2, playerLayer);
-    playerLayer.add(new deadzone({x:playerMv[0].x + 12,y:playerMv[0].y}, {w:10,h:65}, 
-                    OBJECT_GLASS | OBJECT_NPC));
-    playerLayer.add(new deadzone({x:clientMv[0].x - 12, y:clientMv[0].y}, {w:10,h:65}, OBJECT_BEER));
+
+   for(let i = 0; i < 4; i++){
+        playerLayer.add(new deadzone({x:playerMv[i].x + 12,y:playerMv[i].y}, OBJECT_GLASS | OBJECT_NPC));
+        playerLayer.add(new deadzone({x:deadzonePos[i].x - 12, y:deadzonePos[i].y}, OBJECT_BEER));
+    }
+
     playerLayer.add(new player("Player", playerMv[0]));
-    //playerLayer.add(new beer("Beer", playerMv[0]));
-    playerLayer.add(new spawner(new client("NPC", clientMv[0]), 3, 5, 2));
+    playerLayer.add(new spawner(new client("NPC", clientMv[0]), 1, 1, 4));
+    playerLayer.add(new spawner(new client("NPC", clientMv[1]), 2, 1, 3));
+    playerLayer.add(new spawner(new client("NPC", clientMv[2]), 2, 3, 3));
+    playerLayer.add(new spawner(new client("NPC", clientMv[3]), 4, 10, 2));
+    playerLayer.add(new spawner(new client("NPC", clientMv[3], 10), 2, 1, 5));
 
     Game.setBoard(3, new bw());
-
 }
 
 //---------------------------------------------------------------------
@@ -114,7 +124,6 @@ var startGame = function(){
 //---------------------------------------------------------------------
 var bg = function(){
     this.setup("TapperGameplay",{x:0, y:0});
-   
 }
 
 bg.prototype = new Sprite();
@@ -145,13 +154,10 @@ var playerMv = {
     1:{x:357, y:185},
     2:{x:389, y:281},
     3:{x:421, y:377}
-
 }
-
 
 var player = function(sprite, pos){
     this.setup(sprite, {x:pos.x, y:pos.y, pos:0});
-    
 }
 
 player.prototype = new Sprite();
@@ -207,14 +213,14 @@ beer.prototype.hit = function(){
 //---------------------------------------------------------------------
 
 var clientMv = {
-    0:{x:125, y:90},
-    1:{x:87, y:185},
-    2:{x:59, y:281},
-    3:{x:25, y:377} 
+    0:{x:112, y:79},
+    1:{x:80, y:175},
+    2:{x:48, y:271},
+    3:{x:16, y:367} 
 }
 
-var client = function(sprite, pos){
-    this.setup(sprite, {x: pos.x, y: pos.y, vx: 40});
+var client = function(sprite, pos, vx = 40){
+    this.setup(sprite, {x: pos.x, y: pos.y, vx: vx});
 }
 
 client.prototype = new Sprite();
@@ -235,22 +241,30 @@ client.prototype.step = function(dt){
 //      DEADZONE
 //---------------------------------------------------------------------
 
-var deadzone = function(pos, dimension, collisionMask){
+var deadzonePos = {
+    0:{x:112, y:90},
+    1:{x:80, y:185},
+    2:{x:48, y:281},
+    3:{x:16, y:377} 
+}
+var deadzoneSize = {w:10,h:65}
+
+var deadzone = function(pos, collisionMask, dimension = deadzoneSize){
     this.x = pos.x;
     this.y = pos.y;
+    this.collisionMask = collisionMask;
     this.w = dimension.w;
     this.h = dimension.h;
-    this.collisionMask = collisionMask;
-
 }
+
 deadzone.prototype.type = OBJECT_DEADZONE;
 var canvas = document.getElementById("game");
 
 deadzone.prototype.draw = function(){
-    var ctx = canvas.getContext("2d");
+   /* var ctx = canvas.getContext("2d");
     ctx.fillStyle = "#FF2656"
     ctx.fillRect(this.x, this.y, this.w, this.h);
-    ctx.stroke();
+    ctx.stroke();*/
 }
 
 deadzone.prototype.step = function(){
@@ -260,6 +274,7 @@ deadzone.prototype.step = function(){
         gm.loseGame();
     }
 }
+
 
 //---------------------------------------------------------------------
 //      SPAWNER
@@ -292,6 +307,7 @@ spawner.prototype.step = function(dt){
     else
         this.offset -= dt;
 }
+
 
 window.addEventListener("load", function() {
     Game.initialize("game",sprites,startGame);
