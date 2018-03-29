@@ -100,7 +100,9 @@ var startGame = function(){
     Game.setBoard(3, new TitleScreen("TAPPER", "PRESS ENTER TO START PLAYING", playGame));
 }
 
-var playGame = function(){   
+var playGame = function(){ 
+    gm.nbeer = 0;
+    gm.nclient = 0;
     let playerLayer = new GameBoard();
     Game.setBoard(2, playerLayer);
 
