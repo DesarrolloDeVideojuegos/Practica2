@@ -42,6 +42,30 @@ var sprites = {
         frames: 1
       }
    };
+//---------------------------------------------------------------------
+//      LIFES
+//---------------------------------------------------------------------
+
+var lifesNum = 3;
+//Para sprite de cerveza
+/*var lifesPos = {
+    0:{x:250, y:300},
+    1:{x:220, y:300},
+    2:{x:280, y:300}
+}*/
+//Para sprite de player
+var lifesPos = {
+    0:{x:230, y:300},
+    1:{x:160, y:300},
+    2:{x:300, y:300}
+}
+var lifes = function(num){
+    this.setup("Player", lifesPos[num]);
+}
+lifes.prototype = new Sprite();
+lifes.prototype.step = function(){
+    return;  
+};
 
 //---------------------------------------------------------------------
 //      GAMEMANAGER
@@ -51,34 +75,47 @@ var gameManager = function(){
     this.nbeer = 0;
     this.nclient = 0;
 }
-
 gameManager.prototype.addBeer = function(){
     this.nbeer++;
+    console.log("Cervezas:", this.nbeer);
 }
 gameManager.prototype.rmBeer = function(){
     this.nbeer--;
+    console.log("Cervezas:", this.nbeer);
     if(this.nbeer === 0 && this.nclient === 0)
         gm.winGame();
 }
 gameManager.prototype.addClients = function(num=1){
     this.nclient += num;
+    console.log("Clientes:", this.nclient);
 }
 gameManager.prototype.rmClient = function(){
     this.nclient--;
+    console.log("Clientes:", this.nclient);
 }
 gameManager.prototype.winGame = function(){
-   
-    Game.setBoard(3,new TitleScreen("YOU WIN", 
-                                  "PRESS ENTER TO START PLAYING",
-                                  playGame));
-   
+    Game.setBoard(2, undefined);
+    Game.setBoard(3,new TitleScreen("YOU WIN", "PRESS ENTER TO START PLAYING", playGame));
+
+    levels
+    let liveLayer = new GameBoard();
+    Game.setBoard(5, liveLayer);
+    for (i = 0; i < lifesNum; i++)
+        liveLayer.add(new lifes(i));
 }
 gameManager.prototype.loseGame = function(){
+    Game.setBoard(2, undefined);
+    Game.setBoard(3,new TitleScreen("YOU LOOSE", "PRESS ENTER TO START PLAYING", playGame));
     
-    Game.setBoard(3,new TitleScreen("YOU LOOSE", 
-                              "PRESS ENTER TO START PLAYING",
-                              playGame));
-
+    lifesNum--;
+    if(lifesNum === 0){
+        Game.points = 0;
+        lifesNum = 3;
+    }
+    let liveLayer = new GameBoard();
+    Game.setBoard(5, liveLayer);
+    for (i = 0; i < lifesNum; i++)
+        liveLayer.add(new lifes(i));
 
 }
 
@@ -92,17 +129,27 @@ var OBJECT_PLAYER = 1,
    OBJECT_DEADZONE = 8,
    OBJECT_GLASS = 16;
 
-var aux = 0;
+var lvl = 1;
 var gm = new gameManager();
 
 var startGame = function(){
     Game.setBoard(1, new bg());
     Game.setBoard(3, new TitleScreen("TAPPER", "PRESS ENTER TO START PLAYING", playGame));
+
+    this.lifesNum = 3;
+    let liveLayer = new GameBoard();
+    Game.setBoard(5, liveLayer);
+    for (i = 0; i < lifesNum; i++)
+        liveLayer.add(new lifes(i));
+
+    Game.setBoard(6,new GamePoints(0));
 }
 
-var playGame = function(){ 
+var playGame = function(){
     gm.nbeer = 0;
     gm.nclient = 0;
+    Game.setBoard(5, undefined);
+
     let playerLayer = new GameBoard();
     Game.setBoard(2, playerLayer);
 
@@ -110,13 +157,19 @@ var playGame = function(){
         playerLayer.add(new deadzone({x:playerMv[i].x + 12,y:playerMv[i].y}, OBJECT_GLASS | OBJECT_NPC));
         playerLayer.add(new deadzone({x:deadzonePos[i].x - 12, y:deadzonePos[i].y}, OBJECT_BEER));
     }
-
     playerLayer.add(new player("Player", playerMv[0]));
-    playerLayer.add(new spawner(new client("NPC", clientMv[0]), 1, 1, 4));
+
+    /*playerLayer.add(new spawner(new client("NPC", clientMv[0]), 1, 1, 4));
     playerLayer.add(new spawner(new client("NPC", clientMv[1]), 2, 1, 3));
     playerLayer.add(new spawner(new client("NPC", clientMv[2]), 2, 3, 3));
     playerLayer.add(new spawner(new client("NPC", clientMv[3]), 4, 10, 2));
-    playerLayer.add(new spawner(new client("NPC", clientMv[3], 10), 2, 1, 5));
+    playerLayer.add(new spawner(new client("NPC", clientMv[3], 10), 2, 1, 5));*/
+    for (i = 0; i < levels[lvl].nS; i++){
+        let barra = i % 4;  
+        let vel = Math.floor(Math.random() * levels[lvl].mV) + 10  
+        playerLayer.add(new spawner(new client("NPC", clientMv[barra], vel),
+                                     levels[lvl].mC, levels[lvl].mO, levels[lvl].mF));
+    }
 
     Game.setBoard(3, new bw());
 }
@@ -180,6 +233,7 @@ player.prototype.step = function(){
     }
     let collision = this.board.collide(this, OBJECT_GLASS);
     if(collision){
+        Game.points += 100;
         this.board.remove(collision);
         gm.rmBeer();
     }
@@ -235,6 +289,7 @@ client.prototype.step = function(dt){
         collision.hit();
         this.board.remove(this);
         gm.rmClient();
+        Game.points += 50;
     }
     return;
 }
@@ -284,11 +339,12 @@ deadzone.prototype.step = function(){
 
 var spawner = function(client, num, offset, frec){
     this.client = client;
-    this.num = num;
-    this.maxFrec = frec;
+    this.num = Math.floor(Math.random() * num) + 1;
+    this.maxFrec = Math.floor(Math.random() * 10) + frec;
     this.actFrec = 0;
-    this.offset = offset;
-    gm.addClients(num);
+    this.offset = Math.floor(Math.random() * offset) + 1;
+
+    gm.addClients(this.num);
 }
 
 spawner.prototype.draw = function(){
@@ -308,6 +364,17 @@ spawner.prototype.step = function(dt){
     }
     else
         this.offset -= dt;
+}
+
+//---------------------------------------------------------------------
+//      Levels
+//---------------------------------------------------------------------
+
+//numLevel:{numSpawn, maxClient, maxVel, maxOffset, minFrec}
+var levels = {
+    1:{nS:4, mC:3, mV:30, mO:6, mF:4},
+    2:{nS:5, mC:4, mV:40, mO:5, mF:3},
+    3:{nS:6, mC:5, mV:50, mO:4, mF:2}
 }
 
 
