@@ -1,0 +1,70 @@
+Barman triste 1
+x:132
+y:113
+w:143
+h:268
+Barman triste 2
+x:521
+y:113
+w:143
+h:268
+Servir cerveza 1
+x:889
+y:24
+w:225
+h:356
+Servir cerveza 2
+x:1285
+y:24
+w:225
+h:356
+Barman corriendo 1
+x:80
+y:509
+w:237
+h:273
+Barman corriendo 2
+x:482
+y:509
+w:237
+h:273
+Barman corriendo 3
+x:882
+y:509
+w:237
+h:273
+Barman corriendo 4
+x:1282
+y:509
+w:237
+h:273
+Cerveza servida
+x:1811
+y:131
+w:79
+h:119
+Mamma mia Barman
+x:1740
+y:527
+w:122
+h:251
+PDT 1
+x:117
+y:936
+w:149
+h:127
+PDT 2
+x:515
+y:936
+w:149
+h:127
+PDT 3
+x:921
+y:936
+w:149
+h:127
+PDT 4
+x:1357
+y:936
+w:149
+h:127
