@@ -92,12 +92,22 @@ gameManager.prototype.addClients = function(num=1){
 gameManager.prototype.rmClient = function(){
     this.nclient--;
     console.log("Clientes:", this.nclient);
+    if(this.nbeer === 0 && this.nclient === 0)
+        gm.winGame();
 }
 gameManager.prototype.winGame = function(){
     Game.setBoard(2, undefined);
-    Game.setBoard(3,new TitleScreen("YOU WIN", "PRESS ENTER TO START PLAYING", playGame));
 
-    levels
+    if(lvl === 3){
+        Game.setBoard(3,new TitleScreen("CONGRATULATIONS!", "YOU ACHIEVED " + Game.points + " POINTS!", playGame));
+        lvl = 1;
+        Game.points = 0;
+        lifesNum = 3;
+    }else{
+        Game.setBoard(3,new TitleScreen("YOU WIN THIS TIME!", "PRESS ENTER TO START THE NEXT DAY", playGame));
+        lvl++;
+    }
+
     let liveLayer = new GameBoard();
     Game.setBoard(5, liveLayer);
     for (i = 0; i < lifesNum; i++)
@@ -105,13 +115,18 @@ gameManager.prototype.winGame = function(){
 }
 gameManager.prototype.loseGame = function(){
     Game.setBoard(2, undefined);
-    Game.setBoard(3,new TitleScreen("YOU LOOSE", "PRESS ENTER TO START PLAYING", playGame));
-    
-    lifesNum--;
-    if(lifesNum === 0){
+
+    if(lifesNum === 1){
+        Game.setBoard(3,new TitleScreen("YOU'RE FIRED!", "AT LEAST YOU GOT " + Game.points + " POINTS...", playGame));
+        lvl = 1;
         Game.points = 0;
         lifesNum = 3;
+
+    }else{
+        Game.setBoard(3,new TitleScreen("OOPS! YOU LOSE!", "PRESS ENTER TO TRY AGAIN", playGame));
+        lifesNum--;
     }
+
     let liveLayer = new GameBoard();
     Game.setBoard(5, liveLayer);
     for (i = 0; i < lifesNum; i++)
@@ -155,7 +170,7 @@ var playGame = function(){
 
    for(let i = 0; i < 4; i++){
         playerLayer.add(new deadzone({x:playerMv[i].x + 12,y:playerMv[i].y}, OBJECT_GLASS | OBJECT_NPC));
-        playerLayer.add(new deadzone({x:deadzonePos[i].x - 12, y:deadzonePos[i].y}, OBJECT_BEER));
+        playerLayer.add(new deadzone({x:deadzonePos[i].x - 12, y:deadzonePos[i].y}, OBJECT_BEER | OBJECT_NPC));
     }
     playerLayer.add(new player("Player", playerMv[0]));
 
@@ -165,8 +180,8 @@ var playGame = function(){
     playerLayer.add(new spawner(new client("NPC", clientMv[3]), 4, 10, 2));
     playerLayer.add(new spawner(new client("NPC", clientMv[3], 10), 2, 1, 5));*/
     for (i = 0; i < levels[lvl].nS; i++){
-        let barra = i % 4;  
-        let vel = Math.floor(Math.random() * levels[lvl].mV) + 10  
+        let barra = 3- (i % 4);  
+        let vel = Math.floor(Math.random() * levels[lvl].mV) + 20  
         playerLayer.add(new spawner(new client("NPC", clientMv[barra], vel),
                                      levels[lvl].mC, levels[lvl].mO, levels[lvl].mF));
     }
@@ -246,7 +261,7 @@ player.prototype.step = function(){
 //---------------------------------------------------------------------
 
 var beer = function(sprite, pos){
-    this.setup(sprite, {x:pos.x - 23, y:pos.y, vx:-30}); 
+    this.setup(sprite, {x:pos.x - 23, y:pos.y, vx:-40}); 
     gm.addBeer();
 }
 
@@ -276,20 +291,31 @@ var clientMv = {
 }
 
 var client = function(sprite, pos, vx = 40){
-    this.setup(sprite, {x: pos.x, y: pos.y, vx: vx});
+    this.setup(sprite, {x: pos.x, y: pos.y, vx: vx, timer:3, drinking:false});
 }
 
 client.prototype = new Sprite();
 client.prototype.type = OBJECT_NPC;
 
 client.prototype.step = function(dt){
-    this.x += dt * this.vx;
-    let collision = this.board.collide(this,OBJECT_BEER);
-    if(collision){
-        collision.hit();
-        this.board.remove(this);
-        gm.rmClient();
-        Game.points += 50;
+    if(!this.drinking){
+        this.x += dt * this.vx;
+        let collision = this.board.collide(this,OBJECT_BEER);
+        if(collision){
+            collision.hit();
+            //this.board.remove(this);
+            //gm.rmClient();
+            Game.points += 50;
+            this.drinking = true;
+        }
+    }
+    else{
+        this.timer -= dt;
+        this.x += dt * -50;
+        if(this.timer <= 0){
+            this.drinking = false; 
+            this.timer = 3;           
+        } 
     }
     return;
 }
@@ -327,8 +353,11 @@ deadzone.prototype.draw = function(){
 deadzone.prototype.step = function(){
     let collision = this.board.collide(this, this.collisionMask);
     if(collision){
+        if(collision instanceof client && collision.drinking)
+            gm.rmClient();
+        else
+            gm.loseGame();
         this.board.remove(collision);
-        gm.loseGame();
     }
 }
 
@@ -340,9 +369,9 @@ deadzone.prototype.step = function(){
 var spawner = function(client, num, offset, frec){
     this.client = client;
     this.num = Math.floor(Math.random() * num) + 1;
-    this.maxFrec = Math.floor(Math.random() * 10) + frec;
+    this.maxFrec = Math.floor(Math.random() * (frec*2)) + frec;
     this.actFrec = 0;
-    this.offset = Math.floor(Math.random() * offset) + 1;
+    this.offset = Math.floor(Math.random() * (offset*lvl)) + 1;
 
     gm.addClients(this.num);
 }
@@ -372,9 +401,9 @@ spawner.prototype.step = function(dt){
 
 //numLevel:{numSpawn, maxClient, maxVel, maxOffset, minFrec}
 var levels = {
-    1:{nS:4, mC:3, mV:30, mO:6, mF:4},
-    2:{nS:5, mC:4, mV:40, mO:5, mF:3},
-    3:{nS:6, mC:5, mV:50, mO:4, mF:2}
+    1:{nS:4, mC:2, mV:30, mO:6, mF:7},
+    2:{nS:6, mC:2, mV:40, mO:6, mF:6},
+    3:{nS:8, mC:3, mV:40, mO:5, mF:6}
 }
 
 
