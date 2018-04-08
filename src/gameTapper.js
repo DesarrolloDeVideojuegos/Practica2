@@ -402,8 +402,8 @@ spawner.prototype.step = function(dt){
 //numLevel:{numSpawn, maxClient, maxVel, maxOffset, minFrec}
 var levels = {
     1:{nS:4, mC:2, mV:30, mO:6, mF:7},
-    2:{nS:6, mC:2, mV:40, mO:6, mF:6},
-    3:{nS:8, mC:3, mV:40, mO:5, mF:6}
+    2:{nS:4, mC:2, mV:40, mO:6, mF:5},
+    3:{nS:6, mC:3, mV:40, mO:5, mF:9}
 }
 
 
